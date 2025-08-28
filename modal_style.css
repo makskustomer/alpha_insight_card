@@ -1,0 +1,118 @@
+:root {
+    --purple: #8e6bff;
+    --light_purple: #f4f0ff;
+    --medium_purple: #aa8fff;
+    --ai_purple: #5746eed1;
+
+    --pink: #ffa3b3;
+    --light_pink: #ffedf1;
+
+    --green: #15cc70;
+    --light_green: #d0f5e2;
+    --medium_green: #dcedda;
+    --dark_green: #036704;
+    --task_green: green;
+    --junk_green: #15cc70;
+
+    --orange: #e86f10;
+    --light_orange: #fdf2eb;
+
+    --yellow: #ffb600;
+    --light_yellow: #fff7e0;
+
+    --blue: #5089ff;
+    --light_blue: #dce7ff;
+    --medium_blue: #6d9dff;
+
+    --red: #e5493b;
+    --light_red: #fadbd8;
+    --crimson: #c41923;
+    --light_crimson: #fff0f0;
+
+    --gray: #595e77;
+    --light_gray: #ebebee;
+    --medium_gray: #cdced6;
+
+    --black: #000000;
+    --white: #ffffff;
+
+    --font_size_default: 14px;
+    --primary-color: #185ee0;
+    --secondary-color: #e6eef9;
+
+    --primary-color: #185ee0;
+    --secondary-color: #e6eef9;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  background-color: var(--background-primary-color);    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.scrollable-container {
+    width: 100%;
+    max-width: 770px;
+    height: 670px;
+    overflow-y: auto;
+    background-color: var(--background-primary-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+}
+
+
+.scrollable-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.scrollable-container::-webkit-scrollbar-thumb {
+    background-color: #bbbbbb;
+    border-radius: 4px;
+}
+
+.scrollable-container::-webkit-scrollbar-thumb:hover {
+    background-color: #999999;
+}
+
+.profile-card {
+    display: flex;
+    align-items: flex-start;
+    background-color: var(--background-primary-color);
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    gap: 16px;
+}
+
+.profile-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.name {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 4px 0;
+}
+
+.description {
+    font-size: 14px;
+    line-height: 1.6;
+}
