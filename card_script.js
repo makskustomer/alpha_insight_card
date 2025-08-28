@@ -1046,7 +1046,7 @@ async function report() {
         );
         if (issue && issue !== "Enter issue here...") {
             const response = await fetch(
-                "https://hooks.slack.com/services/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",
+                "https://hooks.slack.com/services/T08FE7136/abcdefg",
                 {
                     method: "POST",
                     body: JSON.stringify({
