@@ -80,8 +80,10 @@ The card expects context data in the following format:
 
 Cards are typically deployed to:
 - CDN locations (e.g., `cdnapps.kustomerapp.com`)
-- GitHub Pages (as in this case: `bryce-kustomer.github.io/alpha_insight_card/`)
 - Internal hosting infrastructure
+- Organization-managed deployment infrastructure
+
+**Note**: This card is being migrated from a former employee's repository. Deployment location will be updated when moved to the `kustomer` organization.
 
 The deployment location should be:
 - Accessible to Kustomer Alpha environments

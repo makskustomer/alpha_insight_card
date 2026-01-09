@@ -78,7 +78,7 @@ Similar cards are maintained in the `kustomer/card-kustomer-*` repository patter
 
 ## Repository Status
 
-**⚠️ Important**: This repository is currently public. 
+**⚠️ Important**: This repository is currently public and is being migrated from a former employee's GitHub account. 
 
 ### Privacy Considerations
 
@@ -91,24 +91,28 @@ Similar cards are maintained in the `kustomer/card-kustomer-*` repository patter
 
 ### Current Deployment
 
-The card is currently deployed at:
-- GitHub Pages: `https://bryce-kustomer.github.io/alpha_insight_card/`
-- Referenced in `index.html` line 11
+**Note**: This repository is being migrated from a former employee's GitHub account. The card will be:
+- Moved to `kustomer` organization
+- Made private
+- Deployed to appropriate CDN/hosting infrastructure
+- All external references to old URLs have been removed
 
-### Recommended Actions
+### Migration Plan
 
-1. **Review Repository Visibility**
-   - Assess if this code should be public or private
-   - Consider proprietary logic and business value
+1. **Code Cleanup** ✅
+   - Remove references to former employee's GitHub Pages URL
+   - Clean up hardcoded tokens and secrets
+   - Improve code quality and security
 
-2. **Standardize Repository Location**
-   - Move to `kustomer` organization if appropriate
+2. **Repository Migration** (In Progress)
+   - Move to `kustomer` organization
    - Follow `kustomer/card-kustomer-*` naming convention
-   - Set appropriate access controls
+   - Set repository to private
 
-3. **Update Deployment**
-   - If moved, update card URL in Kustomer Alpha configuration
-   - Ensure CDN/hosting aligns with security requirements
+3. **Deployment Update** (Pending)
+   - Deploy to appropriate CDN/hosting infrastructure
+   - Update card URL in Kustomer Alpha configuration
+   - Remove old deployment references
 
 ## Notes
 

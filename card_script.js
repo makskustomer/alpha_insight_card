@@ -1759,7 +1759,7 @@ async function initModal(company, initialize) {
         additionalData: {
             stakeholderData: stakeholderData,
         },
-        url: "https://bryce-kustomer.github.io/alpha_insight_card/modal_index.html",
+        url: "modal_index.html", // TODO: Update to final deployment URL when moved to kustomer org
         height: 700,
         width: 800,
     };
