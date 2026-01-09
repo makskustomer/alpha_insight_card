@@ -1,14 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.kustomerapp.com https://bryce-kustomer.github.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.openai.com https://api.kustomerapp.com https://hooks.slack.com https://api.chilipiper.com;">
     <link rel="stylesheet" href="/alpha_insight_card/card_style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Subresource Integrity (SRI) should be added when hashes are available -->
+    <script 
+      src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"
+      integrity=""
+      crossorigin="anonymous"
+    ></script>
 
     <script
       src="https://cdn.kustomerapp.com/card-js/latest/kustomer-card.js"
       defer
+      integrity=""
+      crossorigin="anonymous"
     ></script>
-    <script src="https://bryce-kustomer.github.io/alpha_insight_card/card_script.js" defer></script>
+    <script 
+      src="https://bryce-kustomer.github.io/alpha_insight_card/card_script.js" 
+      defer
+    ></script>
   </head>
   <body>
     <div class="container" id="container">

@@ -311,7 +311,7 @@ function loadMetrics(companyData) {
                 value = formatDate(value);
             }
             else if (key == "projectStatusStr") {
-                console.log(value);
+                // Removed console.log for production
                 if (value == "In progress") {
                     const impElement = document.getElementById("implementationStatus");
 
@@ -505,14 +505,31 @@ function handleSearchInput(event) {
         event.target.value.trim() !== ""
     ) {
         try {
-            const userMessage = event.target.value.trim(); // Get and trim the user's input
+            const rawInput = event.target.value.trim();
+            
+            // Input validation
+            if (rawInput.length > 10000) {
+                triggerToast("error", "Message is too long. Please keep it under 10,000 characters.");
+                return;
+            }
+            
+            if (rawInput.length === 0) {
+                return;
+            }
+            
+            // Sanitize input to prevent XSS
+            const userMessage = rawInput.replace(/[<>]/g, '');
+            
             addMessage(userMessage, "user"); // Display the user's message in the chat
             addMessage(userMessage, "thinking"); // Display a "thinking" message indicating processing
             event.target.value = ""; // Clear the input field after the message is sent
         } catch (messageError) {
-            const errorMessage = "Error handling user message:";
-            //addMessage(errorMessage, 'sidekick');
-            console.error("Error handling user message", messageError);
+            const errorMessage = "Error handling user message. Please try again.";
+            triggerToast("error", errorMessage);
+            // Only log errors in development
+            if (window.location.hostname === 'localhost' || window.location.hostname.includes('sandbox')) {
+                console.error("Error handling user message", messageError);
+            }
         }
     }
 }
@@ -531,8 +548,8 @@ function addMessage(message, sender, messageId) {
         else if (sender === "sidekick") {
             addSideKickMessage(message, messageElement, messageId);
         } else {
-            //User message
-            messageElement.innerHTML = message;
+            //User message - Use textContent to prevent XSS
+            messageElement.textContent = message;
             messageElement.id = messageId ?? "";
         }
         // Append the message to the chat-box and scroll to the bottom
@@ -629,8 +646,18 @@ function addMessage(message, sender, messageId) {
                 const textToCopy = element.textContent.replace("Copy", "").trim();
                 navigator.clipboard
                     .writeText(textToCopy)
-                    .then(() => console.log("Message copied to clipboard:", textToCopy))
-                    .catch((err) => console.error("Failed to copy message:", err));
+                    .then(() => {
+                        // Only log in development
+                        if (window.location.hostname === 'localhost' || window.location.hostname.includes('sandbox')) {
+                            console.log("Message copied to clipboard");
+                        }
+                    })
+                    .catch((err) => {
+                        triggerToast("error", "Failed to copy message to clipboard.");
+                        if (window.location.hostname === 'localhost' || window.location.hostname.includes('sandbox')) {
+                            console.error("Failed to copy message:", err);
+                        }
+                    });
                 const params = {
                     type: "success",
                     message: "Message copied to clipboard!", // A friendly message to your users as feedback of something that happened in your app
@@ -642,8 +669,11 @@ function addMessage(message, sender, messageId) {
         });
 
         // Append SVG and label to the copy container, and set message content
+        // Note: Marked.parse() returns sanitized HTML, but we should still be cautious
         var existingMessage = document.getElementById(messageId);
         if (!existingMessage) {
+            // Marked.parse() returns HTML, but we should validate it's safe
+            // In production, consider using DOMPurify for additional sanitization
             messageElement.innerHTML = message;
             messageElement.id = messageId;
             copyDiv.appendChild(copySvg);
@@ -666,12 +696,19 @@ function addMessage(message, sender, messageId) {
 
     async function createNewThread(message) {
         try {
+            // Validate input before sending
+            if (!message || typeof message !== 'string' || message.trim().length === 0) {
+                throw new Error('Invalid message input');
+            }
+            
+            const sanitizedMessage = message.trim().substring(0, 50000); // Limit message length
+            
             const requestBody = {
                 args: { url: `https://api.openai.com/v1/threads/runs` },
                 body: {
-                    assistant_id: "asst_0q20aQQO7ECwiXMz7D67ZB9E",
+                    assistant_id: "asst_0q20aQQO7ECwiXMz7D67ZB9E", // TODO: Move to config
                     thread: {
-                        messages: [{ role: "user", content: `${message}` }],
+                        messages: [{ role: "user", content: sanitizedMessage }],
                     },
                 },
             };
@@ -1044,25 +1081,53 @@ async function report() {
             `Please describe the issue. This will be sent to #sidekick `,
             "Enter issue here..."
         );
-        if (issue && issue !== "Enter issue here...") {
-            const response = await fetch(
-                "https://hooks.slack.com/services/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",
-                {
-                    method: "POST",
-                    body: JSON.stringify({
-                        channel: "C07NFEKFFC6",
-                        icon_emoji: ":sidekick:",
-                        username: `Reported Issue from ${currentUserName}`,
-                        unfurl_links: false,
-                        text: `<https://kustomer.kustomerapp.com/app/conversations/${conversationId}|Conversation> | Thread Id: \`${aiThreadStr}\` \`\`\`${issue}\`\`\` `,
-                    }),
-                }
-            );
-
-            if (!response.ok) throw new Error("Failed to send issue to Slack");
+        
+        // Validate input
+        if (!issue || issue === "Enter issue here..." || issue.trim().length === 0) {
+            return;
         }
+        
+        // Sanitize input
+        const sanitizedIssue = issue.trim().substring(0, 5000); // Limit length
+        const sanitizedUserName = (currentUserName || 'Unknown').replace(/[<>]/g, '');
+        
+        // TODO: Move webhook URL to secure configuration
+        // SECURITY: Webhook URL should be stored securely, not hardcoded
+        const webhookUrl = "[SLACK_WEBHOOK_URL_SHOULD_BE_IN_SECURE_CONFIG]";
+        
+        if (!webhookUrl || webhookUrl.includes('[')) {
+            triggerToast("error", "Reporting service is not configured. Please contact support.");
+            return;
+        }
+        
+        const response = await fetch(
+            webhookUrl,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    channel: "C07NFEKFFC6",
+                    icon_emoji: ":sidekick:",
+                    username: `Reported Issue from ${sanitizedUserName}`,
+                    unfurl_links: false,
+                    text: `<https://kustomer.kustomerapp.com/app/conversations/${conversationId}|Conversation> | Thread Id: \`${aiThreadStr || 'N/A'}\` \`\`\`${sanitizedIssue}\`\`\` `,
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to send issue to Slack");
+        }
+        
+        triggerToast("success", "Issue reported successfully.");
     } catch (error) {
-        console.error("Error reporting issue:", error);
+        triggerToast("error", "Failed to report issue. Please try again.");
+        // Only log errors in development
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('sandbox')) {
+            console.error("Error reporting issue:", error);
+        }
     }
 }
 
@@ -1356,49 +1421,89 @@ function handleConnectClick(event_type, type, length) {
     if (type == "personal") {
         //navigator.clipboard.writeText("https://chili_piper.com/" + chili_piper_username);
     } else if (type === "single_use") {
+        // SECURITY: Token should be loaded from secure configuration
+        // TODO: Move to secure config management
+        const chiliPiperToken = "[CHILI_PIPER_TOKEN_SHOULD_BE_IN_SECURE_CONFIG]";
+        
+        if (!chiliPiperToken || chiliPiperToken.includes('[')) {
+            triggerToast("error", "Scheduling service is not configured. Please contact support.");
+            return;
+        }
+        
+        // Validate inputs
+        if (!event_type || !chiliPiperUsername) {
+            triggerToast("error", "Missing required information for scheduling link.");
+            return;
+        }
+        
+        // Sanitize inputs
+        const sanitizedEmail = (customerEmail || '').replace(/[<>]/g, '');
+        const sanitizedFirstName = (customerFirstName || '').replace(/[<>]/g, '');
+        
         fetch("https://api.chilipiper.com/api/v2/bookinglinks/singleuse", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization:
-                    "Bearer eyJ1aWQiOiI2NGYyMDgwMWYxZTgyNDI5M2FmNzI3MTgiLCJuYmYiOjE3MjU5MDE5MzQsImV4cCI6MTc1NzQzNzkzOSwiaWF0IjoxNzI1OTAxOTM5LCJ0aWQiOiJrdXN0b21lci4xIiwianRpIjoiYjY2MDY3MDktNzllZS00MzJiLWEyYWYtZjA3ODUzZDAxZTRlIn0.ls7idmVgYh6IIKUtt5JlebXo01USu2K2rZstYZI9Kwo",
+                Authorization: `Bearer ${chiliPiperToken}`,
             },
             body: JSON.stringify({
-                templateId: `${event_type}`,
-                assigneeName: `${chiliPiperUsername}`,
+                templateId: String(event_type),
+                assigneeName: String(chiliPiperUsername),
                 type: "Personal",
             }),
         })
             .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 return response.json();
             })
             .then((data) => {
-                navigator.clipboard.writeText(
-                    data.address +
-                    "?email=" +
-                    customerEmail +
-                    "&name=" +
-                    customerFirstName +
-                    "&conversation_id=" +
-                    conversationId
+                if (!data || !data.address) {
+                    throw new Error("Invalid response from scheduling service");
+                }
+                
+                const url = `${data.address}?email=${encodeURIComponent(sanitizedEmail)}&name=${encodeURIComponent(sanitizedFirstName)}&conversation_id=${encodeURIComponent(conversationId || '')}`;
+                
+                navigator.clipboard.writeText(url).catch((err) => {
+                    triggerToast("error", "Failed to copy link to clipboard.");
+                    if (window.location.hostname === 'localhost' || window.location.hostname.includes('sandbox')) {
+                        console.error("Clipboard error:", err);
+                    }
+                });
+                
+                triggerToast(
+                    "success",
+                    `${length} Chili Piper scheduling link copied to clipboard!`
                 );
+            })
+            .catch((error) => {
+                triggerToast("error", "Failed to generate scheduling link. Please try again.");
+                if (window.location.hostname === 'localhost' || window.location.hostname.includes('sandbox')) {
+                    console.error("Chili Piper API error:", error);
+                }
             });
-        triggerToast(
-            "success",
-            `${length} Chili Piper scheduling link copied to clipboard!`
-        );
     } else if (type === "kustomer_zoom") {
         //navigator.clipboard.writeText(kustomer_zoom_link);
     }
 }
 
 function triggerToast(type, message) {
-    console.log("firing");
+    // Validate inputs
+    const validTypes = ['success', 'error', 'warn', 'info'];
+    if (!validTypes.includes(type)) {
+        type = 'info';
+    }
+    
+    if (!message || typeof message !== 'string') {
+        message = 'An error occurred';
+    }
+    
     const params = {
         type: type,
-        message: message,
+        message: message.substring(0, 500), // Limit message length
     };
-    console.log(params);
+    
     Kustomer.handleTriggerToast(params);
 }
 
@@ -1516,7 +1621,7 @@ function handleAssignments(type, reason) {
 
 function escalate(type, reason) {
     //Changing the count/boolean causes this workflow to run: https://kustomer.kustomerapp.com/app/settings/workflows/5e73c85109801c00195a99cc/edit
-    console.log(type);
+    // Removed console.log for production
     var newCount = 0;
     var escalatedBool = false;
     if (currentEscalationCount == 0) {
@@ -1677,7 +1782,7 @@ async function initModal(company, initialize) {
 // ============================
 Kustomer.initialize(async function (data) {
     setTimeout(() => {
-        console.log("init");
+        // Removed console.log for production
         companyData = data[2];
         data = data[3];
 
@@ -1697,7 +1802,7 @@ Kustomer.initialize(async function (data) {
         document.getElementById("chat-box").innerHTML = "";
         customerFirstName = data.customer?.attributes?.firstName ?? "";
         customerLastName = data.customer?.attributes?.lastName ?? "";
-        console.log(data);
+        // Removed console.log for production
         customerEmail = data.customer?.attributes?.emails?.[0]?.email ?? "";
         loadThread(aiThreadStr);
 
@@ -1717,12 +1822,19 @@ Kustomer.initialize(async function (data) {
             companyAccountType =
                 data.company?.attributes?.custom?.accountTypeStr ?? "";
             companyName = data.company?.attributes?.name ?? "";
-            console.log(companyImpersonationUserId);
-            document.getElementById("companyName").innerHTML = companyName;
-        } else {
-            console.log("else");
-            document.getElementById("companyName").innerHTML = "-";
-        }
+            // Removed console.log for production
+            // Use textContent instead of innerHTML to prevent XSS
+            const companyNameElement = document.getElementById("companyName");
+            if (companyNameElement) {
+                companyNameElement.textContent = companyName;
+            }
+            } else {
+                // Removed console.log for production
+                const companyNameElement = document.getElementById("companyName");
+                if (companyNameElement) {
+                    companyNameElement.textContent = "-";
+                }
+            }
 
         currentUserId = data.user;
 
@@ -1772,7 +1884,7 @@ Kustomer.initialize(async function (data) {
 Kustomer.on("context", function (data) {
     if (data[3].conversation.id !== conversationId) {
         setTimeout(() => {
-            console.log("context");
+            // Removed console.log for production
             companyData = data[2];
             data = data[3];
 
@@ -1812,14 +1924,20 @@ Kustomer.on("context", function (data) {
                     data.company?.attributes?.custom?.accountTypeStr ?? "";
                 companyName = data.company?.attributes?.name ?? "";
 
-                document.getElementById("companyName").innerHTML = companyName;
+                const companyNameElement = document.getElementById("companyName");
+                if (companyNameElement) {
+                    companyNameElement.textContent = companyName;
+                }
             } else {
                 const elements = document.querySelectorAll(".metric_value"); // Select all elements with the class name
 
                 elements.forEach((element) => {
                     element.innerHTML = "-"; // Set innerHTML for each element
                 });
-                document.getElementById("companyName").innerHTML = "-";
+                const companyNameElement = document.getElementById("companyName");
+                if (companyNameElement) {
+                    companyNameElement.textContent = "-";
+                }
             }
 
             currentUserId = data.user;

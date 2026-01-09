@@ -1,6 +1,7 @@
-Kustomer.on("modal_show", () => console.log("modal_show"));
-Kustomer.on("modal_hide", () => console.log("modal_hide"));
-Kustomer.on("modal_close", () => console.log("modal_close"));
+// Removed console.log statements for production
+Kustomer.on("modal_show", () => {});
+Kustomer.on("modal_hide", () => {});
+Kustomer.on("modal_close", () => {});
 
 document.querySelectorAll(".profile-img").forEach((img) => {
     img.onerror = function () {
@@ -14,7 +15,7 @@ document.querySelectorAll(".profile-img").forEach((img) => {
     };
 });
 async function createProfileCards(stakeholderData) {
-    console.log(stakeholderData);
+    // Removed console.log for production
 
     // Get the scrollable container
     const scrollableContainer = document.querySelector(".scrollable-container");
@@ -47,14 +48,12 @@ async function createProfileCards(stakeholderData) {
                 "A key technical expert who works with customers to ensure success using the Kustomer platform. They collaborate with Customer Success Managers to drive adoption, resolve technical issues, and influence the product’s direction. Acting as advocates, they ensure the platform integrates seamlessly into customer workflows to create lasting value.",
         }
     };
-  console.log(5353);
-  console.log(roleMapping);
+    // Removed console.log statements for production
 
     for (const data of stakeholderData) {
         try {
             // Extract user data and role mapping
-          console.log(55323333);
-          console.log(data.data);
+            // Removed console.log statements for production
             const userData = data.data;
             const role = roleMapping[data.fieldName] || {
                 title: "Unknown Role",
@@ -114,15 +113,18 @@ async function createProfileCards(stakeholderData) {
             const name = document.createElement("h2");
             name.classList.add("name");
             name.id = "name";
-            name.textContent = userData.displayName || "Unknown User";
+            // Use textContent to prevent XSS
+            name.textContent = (userData.displayName || "Unknown User").replace(/[<>]/g, '');
             
             // Create the title and description
             const title = document.createElement("p");
             title.classList.add("title");
+            // Use textContent to prevent XSS
             title.textContent = role.title;
 
             const description = document.createElement("p");
             description.classList.add("description");
+            // Use textContent to prevent XSS
             description.textContent = role.description;
 
             // Append the elements to the details container
